@@ -1,0 +1,25 @@
+pip
+six
+wheel
+setuptools
+mock
+numpy
+scipy
+h5py
+scikit-learn
+tensorflow
+keras
+anndata==0.6.18
+scanpy>=1.3.7
+magic-impute==1.5.3
+pandas
+requests
+scscope
+scvelo
+
+# Fix backward compatibility
+#   pip uninstall tensorflow-gpu
+#   pip uninstall tensorflow
+#   pip install --upgrade tensorflow
+
+
