@@ -1084,11 +1084,27 @@ body .markdown-body
 .codehilite .gc{color:#999;background-color:#EAF2F5}
 </style><title>README</title></head><body><article class="markdown-body"><h1 id="xenoturbella-single-cell-rna-seq-analysis"><em>Xenoturbella</em> single-cell RNA-seq analysis<a class="headerlink" href="#xenoturbella-single-cell-rna-seq-analysis" title="Permanent link"></a></h1>
 <p>The <em>Xenoturbella</em> single-cell RNA analysis pipeline is set up as a
-series of scripts, forming an experiment. The experiment is identified
+series of scripts, forming an experiment.</p>
+<h3 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link"></a></h3>
+<p>The project makes use of R and Python 3 (for scScope, RNA velocity). To
+install required packages, run the scripts with active interpreters or
+virtual environments.</p>
+<p>R:</p>
+<div class="codehilite"><pre>Rscript requirements.R
+</pre></div>
+
+
+<p>Python:</p>
+<div class="codehilite"><pre>pip install -r requirements.txt
+</pre></div>
+
+
+<h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link"></a></h3>
+<p>An experiment is identified
 by a name and is stored in the output folder under a single directory.
 Optionally, the maximum number of cells per library can be specified
-- experiments on reduced data can be used for debugging.</p>
-<p>The data subset used in this study can comprise all libraries
+- experiments on reduced data can be used for debugging.
+The data subset used in this study can comprise all libraries
 (<code>DATA=all</code>) or the two whole animals (<code>DATA=mix</code>).</p>
 <p>Example values for debug:</p>
 <div class="codehilite"><pre>EXP=test_experiment_all
@@ -1123,17 +1139,43 @@ in.neuro.markers = file.path(in.base.dir, &quot;markers&quot;, &quot;Xenoturbell
 </pre></div>
 
 
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link"></a></h2>
-<p>The project makes use of R and Python 3 (for scScope, RNA velocity). To
-install required packages, run the scripts with active interpreters or
-virtual environments.</p>
-<p>R:</p>
-<div class="codehilite"><pre>Rscript requirements.R
-</pre></div>
+<h3 id="loading-own-files">Loading own files<a class="headerlink" href="#loading-own-files" title="Permanent link"></a></h3>
+<p>To run the analysis pipeline on custom data sets, modify the
+<code>xeno.load.design</code> function, which constructs should return
+a data frame with columns</p>
+<ul>
+<li><code>path</code>: Name of directory in 10x format in <code>matrix/</code>.</li>
+<li><code>name</code>: Human-readable name of the library.</li>
+<li><code>color</code>: Color of library to be used in plots.</li>
+<li><code>animal</code>: Optional &ldquo;batch&rdquo; parameter.</li>
+</ul>
+<p>Default definition:</p>
+<div class="codehilite"><pre># Define experimental design
+xeno.load.design &lt;- function(dset=&quot;all&quot;){
+  design = data.frame(path=c(
+    &quot;Xenoturbella_dorsal_matrix&quot;,
+    &quot;Xenoturbella_mix1_matrix&quot;,
+    &quot;Xenoturbella_mix2_matrix&quot;,
+    &quot;Xenoturbella_skin_matrix&quot;,
+    &quot;Xenoturbella_ventral_1_5hr_matrix&quot;,
+    &quot;Xenoturbella_ventral_2hr_matrix&quot;),
+      animal = c(&quot;animalC&quot;,
+                 &quot;animalAB&quot;,
+                 &quot;animalAB&quot;,
+                 &quot;animalC&quot;,
+                 &quot;animalC&quot;,
+                 &quot;animalC&quot;),
+      color = c(&quot;#f8766d&quot;, &quot;#b79f00&quot;, &quot;#00ba38&quot;, &quot;#00bfc4&quot;, &quot;#619cff&quot;, &quot;#f564e3&quot;),
+    stringsAsFactors = FALSE)
+  design$name = unlist(lapply(strsplit(design$path, &quot;_&quot;),
+                              FUN = function(x){paste(x[2:3], collapse = &quot;_&quot;)}))
 
-
-<p>Python:</p>
-<div class="codehilite"><pre>pip install -r requirements.txt
+  if(dset != &quot;all&quot;){
+    design = design[grep(dset, design$path),]
+  }
+  row.names(design) = design$name
+  return(design)
+}
 </pre></div>
 
 
@@ -1224,7 +1266,7 @@ output/test_experiment/pca/markers/Neurotransmitter_Biosynthesis.tiff
 
 
 <p>Example visualization of Muscle cells:</p>
-<p><img alt="Muscle" src="/Users/martins/Dev/xeno/output/test_experiment/pca/markers/Muscle.1.tiff" /></p>
+<p><img alt="Muscle" src="/Users/martins/Dev/xenoturbella/output/test_experiment/pca/markers/Muscle.1.tiff" /></p>
 <h2 id="clustering-and-cluster-analysis">Clustering and cluster analysis<a class="headerlink" href="#clustering-and-cluster-analysis" title="Permanent link"></a></h2>
 <p>In the following, we devise methods for finding clusters of cells in <em>Xenoturbella</em>.</p>
 <h3 id="identifying-clusters-of-cells-by-louvain-clustering">Identifying clusters of cells by Louvain clustering<a class="headerlink" href="#identifying-clusters-of-cells-by-louvain-clustering" title="Permanent link"></a></h3>
@@ -1347,7 +1389,7 @@ N_GENES=1
 
 
 <p>The output files are gene expression heatmaps in <code>output/test_experiment_all/diffexp-clusters/heatmaps/</code>.</p>
-<p><img alt="heatmap" src="/Users/martins/Dev/xeno/output/test_experiment_all/diffexp-clusters/heatmaps/cluster_groups_top_expression_1.tiff" /></p>
+<p><img alt="heatmap" src="/Users/martins/Dev/xenoturbella/output/test_experiment_all/diffexp-clusters/heatmaps/cluster_groups_top_expression_1.tiff" /></p>
 <h2 id="rna-velocity">RNA velocity<a class="headerlink" href="#rna-velocity" title="Permanent link"></a></h2>
 <p>The RNA velocity is computed on a given dimensionality reduction. The velocity estimates
 are obtained with the <code>scvelo</code> package. A <code>.loom</code> file containing all six libraries is 
@@ -1384,7 +1426,7 @@ output/test_experiment_all/velocity/markers/velocity_orig.ident_no_legend.tiff
 
 
 <p>Example output (Library of origin, <code>orig.ident</code>):
-<img alt="velocity-example" src="/Users/martins/Dev/xeno/output/test_experiment_all/velocity/markers/velocity_orig.ident.tiff" /></p>
+<img alt="velocity-example" src="/Users/martins/Dev/xenoturbella/output/test_experiment_all/velocity/markers/velocity_orig.ident.tiff" /></p>
 <h3 id="r-session-info">R session info<a class="headerlink" href="#r-session-info" title="Permanent link"></a></h3>
 <div class="codehilite"><pre>&gt; sessionInfo()
 R version 3.5.1 (2018-07-02)

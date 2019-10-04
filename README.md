@@ -1,13 +1,34 @@
 # *Xenoturbella* single-cell RNA-seq analysis
 
 The *Xenoturbella* single-cell RNA analysis pipeline is set up as a
-series of scripts, forming an experiment. The experiment is identified
+series of scripts, forming an experiment.
+
+
+### Installation
+
+The project makes use of R and Python 3 (for scScope, RNA velocity). To
+install required packages, run the scripts with active interpreters or
+virtual environments.
+
+R:
+
+    Rscript requirements.R
+
+Python:
+
+    pip install -r requirements.txt
+
+
+
+### Setup
+
+An experiment is identified
 by a name and is stored in the output folder under a single directory.
 Optionally, the maximum number of cells per library can be specified
 - experiments on reduced data can be used for debugging.
-
 The data subset used in this study can comprise all libraries
 (`DATA=all`) or the two whole animals (`DATA=mix`).
+
 
 Example values for debug:
 
@@ -43,19 +64,46 @@ Some analyses require to uncompress the following large files inside the `data/`
 
 
 
-## Installation
+### Loading own files
 
-The project makes use of R and Python 3 (for scScope, RNA velocity). To
-install required packages, run the scripts with active interpreters or
-virtual environments.
+To run the analysis pipeline on custom data sets, modify the
+`xeno.load.design` function, which constructs should return
+a data frame with columns
 
-R:
+- `path`: Name of directory in 10x format in `matrix/`.
+- `name`: Human-readable name of the library.
+- `color`: Color of library to be used in plots.
+- `animal`: Optional "batch" parameter.
 
-    Rscript requirements.R
+Default definition:
 
-Python:
+    # Define experimental design
+    xeno.load.design <- function(dset="all"){
+      design = data.frame(path=c(
+        "Xenoturbella_dorsal_matrix",
+        "Xenoturbella_mix1_matrix",
+        "Xenoturbella_mix2_matrix",
+        "Xenoturbella_skin_matrix",
+        "Xenoturbella_ventral_1_5hr_matrix",
+        "Xenoturbella_ventral_2hr_matrix"),
+          animal = c("animalC",
+                     "animalAB",
+                     "animalAB",
+                     "animalC",
+                     "animalC",
+                     "animalC"),
+          color = c("#f8766d", "#b79f00", "#00ba38", "#00bfc4", "#619cff", "#f564e3"),
+        stringsAsFactors = FALSE)
+      design$name = unlist(lapply(strsplit(design$path, "_"),
+                                  FUN = function(x){paste(x[2:3], collapse = "_")}))
 
-    pip install -r requirements.txt
+      if(dset != "all"){
+        design = design[grep(dset, design$path),]
+      }
+      row.names(design) = design$name
+      return(design)
+    }
+
 
 
 
